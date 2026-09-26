@@ -4,11 +4,14 @@ clear
 tput civis
 trap 'tput cnorm; clear; exit' INT TERM
 
+DURATION=${1:-60}
+
 MAX_TEMP=0
 MAX_TEMP_TIME=0
 
 MIN_FREQ=999
 MIN_FREQ_TIME=0
+
 
 get_cpu() {
     awk -F: '/model name/ {
@@ -58,10 +61,13 @@ get_usage() {
     echo "${usage}%"
 }
 
+SECONDS=0
+
 while true; do
 
     printf "\033[H"
 
+    ELAPSED=$SECONDS
     CPU=$(get_cpu)
     FREQ=$(get_freq)
     TEMP=$(get_temp)
@@ -69,6 +75,22 @@ while true; do
 
     CUR_FREQ=$(echo "$FREQ" | awk '{print $1}')
     CUR_TEMP=$(echo "$TEMP" | tr -d '+°C')
+
+    #################################################
+    # Zeit bestimmen
+    #################################################
+
+    if (( ELAPSED > DURATION));
+    then
+        ELAPSED=$DURATION
+    fi
+
+    if (( ELAPSED >= DURATION )); then
+        STATUS="Complete"
+    else
+        STATUS="Running (${ELAPSED}/${DURATION}s)"
+    fi
+
 
     #################################################
     # Nur während des Stresstests Werte speichern
@@ -130,9 +152,9 @@ while true; do
 
     printf "%-10s %-10s %-12s %s °C @ %ss\n" \
         "Temp:" "$TEMP" "Max:" "$SHOW_MAX_TEMP" "$SHOW_MAX_TEMP_TIME"
-
+    printf "Status: %-20s\n" "$STATUS"
     echo
     echo "Ctrl+C to quit."
 
-    sleep 1
+    sleep 0.5
 done
