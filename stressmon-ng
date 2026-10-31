@@ -3,16 +3,14 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORKDIR="$PWD"
 
-if [[ -x "$SCRIPT_DIR/scripts/stresscpu" ]] ; then
-
+if [[ -x "$SCRIPT_DIR/scripts/stresscpu" ]]; then
     # Running from the Git project
     CPU_SCRIPT="$SCRIPT_DIR/scripts/stresscpu"
     MONITOR_SCRIPT="$SCRIPT_DIR/scripts/stressmon"
-
-    else
-        # Installed version
-        CPU_SCRIPT="stresscpu"
-        MONITOR_SCRIPT="stressmon"
+else
+    # Installed version
+    CPU_SCRIPT="stresscpu"
+    MONITOR_SCRIPT="stressmon"
 fi
 
 DURATION=${1:-60}
@@ -21,15 +19,76 @@ echo "$SCRIPT_DIR"
 echo "$CPU_SCRIPT"
 echo "$MONITOR_SCRIPT"
 
+# Find terminal emulator
+if command -v xdg-terminal-exec >/dev/null 2>&1; then
+    TERMINAL="xdg-terminal-exec"
+elif command -v konsole >/dev/null 2>&1; then
+    TERMINAL="konsole"
+elif command -v xfce4-terminal >/dev/null 2>&1; then
+    TERMINAL="xfce4-terminal"
+elif command -v gnome-terminal >/dev/null 2>&1; then
+    TERMINAL="gnome-terminal"
+elif command -v xterm >/dev/null 2>&1; then
+    TERMINAL="xterm"
+else
+    echo "No supported terminal emulator found."
+    exit 1
+fi
 
-konsole \
-    --title="CPU Stress Test" \
-    --workdir="$WORKDIR" \
-    -e "$CPU_SCRIPT $DURATION" &
+echo "Using terminal: $TERMINAL"
 
-sleep 0.5
+case "$TERMINAL" in
+    xdg-terminal-exec)
+        xdg-terminal-exec "$CPU_SCRIPT" "$DURATION" &
+        sleep 0.5
+        xdg-terminal-exec "$MONITOR_SCRIPT" "$DURATION" &
+        ;;
 
-konsole \
-    --title="Stress Monitor" \
-    --workdir="$WORKDIR" \
-    -e "$MONITOR_SCRIPT $DURATION" &
+    konsole)
+        konsole \
+            --title="CPU Stress Test" \
+            --workdir="$WORKDIR" \
+            -e "$CPU_SCRIPT" "$DURATION" &
+
+        sleep 0.5
+
+        konsole \
+            --title="Stress Monitor" \
+            --workdir="$WORKDIR" \
+            -e "$MONITOR_SCRIPT" "$DURATION" &
+        ;;
+
+    xfce4-terminal)
+        xfce4-terminal \
+            --title="CPU Stress Test" \
+            --working-directory="$WORKDIR" \
+            -e "$CPU_SCRIPT $DURATION" &
+
+        sleep 0.5
+
+        xfce4-terminal \
+            --title="Stress Monitor" \
+            --working-directory="$WORKDIR" \
+            -e "$MONITOR_SCRIPT $DURATION" &
+        ;;
+
+    gnome-terminal)
+        gnome-terminal \
+            --title="CPU Stress Test" \
+            --working-directory="$WORKDIR" \
+            -- "$CPU_SCRIPT" "$DURATION" &
+
+        sleep 0.5
+
+        gnome-terminal \
+            --title="Stress Monitor" \
+            --working-directory="$WORKDIR" \
+            -- "$MONITOR_SCRIPT" "$DURATION" &
+        ;;
+
+    xterm)
+        xterm -T "CPU Stress Test" -e "$CPU_SCRIPT" "$DURATION" &
+        sleep 0.5
+        xterm -T "Stress Monitor" -e "$MONITOR_SCRIPT" "$DURATION" &
+        ;;
+esac

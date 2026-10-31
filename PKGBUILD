@@ -14,5 +14,5 @@ package() {
     install -Dm755 scripts/stresscpu "$pkgdir/usr/bin/stresscpu"
     install -Dm755 scripts/stressmon "$pkgdir/usr/bin/stressmon"
     install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
-    install -Dm644 LICENSE "$pkgdir/usr/share/licences/$pkgmane/LICENSE"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licences/$pkgname/LICENSE"
     }
