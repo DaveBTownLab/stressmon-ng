@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -33,28 +32,15 @@ fi
 
 echo "Using terminal: $TERMINAL"
 
-# Start CPU stress test in background
-
-"$CPU_SCRIPT" "$DURATION" >/dev/null 2>&1 &
-STRESS_PID=$!
-
-# Cleanup
-
-cleanup() {
-    if kill -0 "$STRESS_PID" 2>/dev/null; then
-        kill "$STRESS_PID"
-        wait "$STRESS_PID" 2>/dev/null
-    fi
-}
-
-trap cleanup EXIT INT TERM
-
-sleep 0.5
-
-# Start monitor
-
 case "$TERMINAL" in
     konsole)
+        konsole \
+            --title="CPU Stress Test" \
+            --workdir="$WORKDIR" \
+            -e "$CPU_SCRIPT" "$DURATION" &
+
+        sleep 0.5
+
         konsole \
             --title="Stress Monitor" \
             --workdir="$WORKDIR" \
@@ -63,12 +49,26 @@ case "$TERMINAL" in
 
     xfce4-terminal)
         xfce4-terminal \
+            --title="CPU Stress Test" \
+            --working-directory="$WORKDIR" \
+            -e "$CPU_SCRIPT $DURATION" &
+
+        sleep 0.5
+
+        xfce4-terminal \
             --title="Stress Monitor" \
             --working-directory="$WORKDIR" \
             -e "$MONITOR_SCRIPT $DURATION" &
         ;;
 
     gnome-terminal)
+        gnome-terminal \
+            --title="CPU Stress Test" \
+            --working-directory="$WORKDIR" \
+            -- "$CPU_SCRIPT" "$DURATION" &
+
+        sleep 0.5
+
         gnome-terminal \
             --title="Stress Monitor" \
             --working-directory="$WORKDIR" \
@@ -77,14 +77,13 @@ case "$TERMINAL" in
 
     xterm)
         xterm \
+            -T "CPU Stress Test" \
+            -e "$CPU_SCRIPT" "$DURATION" &
+
+        sleep 0.5
+
+        xterm \
             -T "Stress Monitor" \
             -e "$MONITOR_SCRIPT" "$DURATION" &
         ;;
 esac
-
-# Wait for monitor to exit
-
-MONITOR_PID=$!
-wait "$MONITOR_PID"
-
-# Cleanup will be called automatically by trap
