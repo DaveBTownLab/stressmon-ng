@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -15,14 +16,9 @@ fi
 
 DURATION=${1:-60}
 
-echo "$SCRIPT_DIR"
-echo "$CPU_SCRIPT"
-echo "$MONITOR_SCRIPT"
+# Detect terminal emulator
 
-# Find terminal emulator
-if command -v xdg-terminal-exec >/dev/null 2>&1; then
-    TERMINAL="xdg-terminal-exec"
-elif command -v konsole >/dev/null 2>&1; then
+if command -v konsole >/dev/null 2>&1; then
     TERMINAL="konsole"
 elif command -v xfce4-terminal >/dev/null 2>&1; then
     TERMINAL="xfce4-terminal"
@@ -37,21 +33,28 @@ fi
 
 echo "Using terminal: $TERMINAL"
 
+# Start CPU stress test in background
+
+"$CPU_SCRIPT" "$DURATION" >/dev/null 2>&1 &
+STRESS_PID=$!
+
+# Cleanup
+
+cleanup() {
+    if kill -0 "$STRESS_PID" 2>/dev/null; then
+        kill "$STRESS_PID"
+        wait "$STRESS_PID" 2>/dev/null
+    fi
+}
+
+trap cleanup EXIT INT TERM
+
+sleep 0.5
+
+# Start monitor
+
 case "$TERMINAL" in
-    xdg-terminal-exec)
-        xdg-terminal-exec "$CPU_SCRIPT" "$DURATION" &
-        sleep 0.5
-        xdg-terminal-exec "$MONITOR_SCRIPT" "$DURATION" &
-        ;;
-
     konsole)
-        konsole \
-            --title="CPU Stress Test" \
-            --workdir="$WORKDIR" \
-            -e "$CPU_SCRIPT" "$DURATION" &
-
-        sleep 0.5
-
         konsole \
             --title="Stress Monitor" \
             --workdir="$WORKDIR" \
@@ -60,13 +63,6 @@ case "$TERMINAL" in
 
     xfce4-terminal)
         xfce4-terminal \
-            --title="CPU Stress Test" \
-            --working-directory="$WORKDIR" \
-            -e "$CPU_SCRIPT $DURATION" &
-
-        sleep 0.5
-
-        xfce4-terminal \
             --title="Stress Monitor" \
             --working-directory="$WORKDIR" \
             -e "$MONITOR_SCRIPT $DURATION" &
@@ -74,21 +70,21 @@ case "$TERMINAL" in
 
     gnome-terminal)
         gnome-terminal \
-            --title="CPU Stress Test" \
-            --working-directory="$WORKDIR" \
-            -- "$CPU_SCRIPT" "$DURATION" &
-
-        sleep 0.5
-
-        gnome-terminal \
             --title="Stress Monitor" \
             --working-directory="$WORKDIR" \
             -- "$MONITOR_SCRIPT" "$DURATION" &
         ;;
 
     xterm)
-        xterm -T "CPU Stress Test" -e "$CPU_SCRIPT" "$DURATION" &
-        sleep 0.5
-        xterm -T "Stress Monitor" -e "$MONITOR_SCRIPT" "$DURATION" &
+        xterm \
+            -T "Stress Monitor" \
+            -e "$MONITOR_SCRIPT" "$DURATION" &
         ;;
 esac
+
+# Wait for monitor to exit
+
+MONITOR_PID=$!
+wait "$MONITOR_PID"
+
+# Cleanup will be called automatically by trap

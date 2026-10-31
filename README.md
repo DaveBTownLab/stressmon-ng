@@ -8,15 +8,16 @@ A lightweight Linux utility for CPU stress testing and thermal throttling analys
 
 ## Features
 
-- 🔥 Start a CPU stress test with `stress-ng`
+- 🔥 Starts a CPU stress test using `stress-ng`
 - 📈 Live CPU usage
 - 🌡️ Live CPU temperature
 - ⚡ Live CPU frequency
-- 🥶 Records the lowest frequency under full load
-- 🌡️ Records the highest temperature reached
+- 🥶 Records the lowest CPU frequency under full load
+- 🌡️ Records the highest CPU temperature reached
 - ⏱ Live progress indicator
-- ✅ Freezes recorded values after the stress test finishes
-- 🖥 Opens separate Konsole windows for stress test and monitor
+- ✅ Keeps recorded values visible after the stress test has finished
+- 🖥 Automatically detects and uses the available terminal emulator
+- 🧹 Automatically stops the stress test when the monitor is closed
 
 ---
 
@@ -27,17 +28,21 @@ The following packages are required:
 - bash
 - stress-ng
 - lm_sensors
-- konsole
+- One of the following terminal emulators:
+  - Konsole
+  - XFCE Terminal
+  - GNOME Terminal
+  - xterm
 
 ---
 
-# Project Structure
+## Project Structure
 
-```
+```text
 stressmon-ng/
 ├── LICENSE
-├── PKGBUILD
 ├── README.md
+├── install.sh
 ├── stressmon-ng
 └── scripts/
     ├── stresscpu
@@ -46,7 +51,7 @@ stressmon-ng/
 
 ---
 
-# Running from the Git Repository
+## Installation
 
 Clone the repository:
 
@@ -55,55 +60,47 @@ git clone https://github.com/DaveBTownLab/stressmon-ng.git
 cd stressmon-ng
 ```
 
-Start a 60 second stress test:
+Install the project:
 
 ```bash
-./stressmon-ng
+sudo ./install.sh
 ```
 
-Start a custom duration:
-
-```bash
-./stressmon-ng 180
-```
-
-Example:
-
-```bash
-./stressmon-ng 300
-```
-
-Runs a 5 minute CPU stress test.
+The installer copies the launcher and helper scripts to `/usr/bin`, making `stressmon-ng` available system-wide.
 
 ---
 
-# Installation (Arch Linux)
+## Running
 
-Build and install using makepkg:
-
-```bash
-makepkg -si
-```
-
-After installation the tool is available system-wide:
+Start a 60 second stress test:
 
 ```bash
 stressmon-ng
 ```
 
-or
+Start a custom duration:
 
 ```bash
 stressmon-ng 180
 ```
 
-No need to execute it from the project directory anymore.
+Example:
+
+```bash
+stressmon-ng 300
+```
+
+Runs a 5 minute CPU stress test.
+
+The CPU stress test runs in the background while a single monitoring window is opened automatically.
+
+Closing the monitor also terminates the running stress test.
 
 ---
 
-# Example Output
+## Example Output
 
-```
+```text
 ==================================================
 Stress Monitor
 ==================================================
@@ -120,18 +117,18 @@ Ctrl+C to quit.
 
 After the stress test:
 
-```
+```text
 Status:   Complete
 
 Freq:     4.20 GHz      Min: 3.98 GHz @ 81s
 Temp:     +39.0°C       Max: 74.5°C @ 96s
 ```
 
-The minimum frequency and maximum temperature remain visible after the test has finished, making it easy to determine whether thermal throttling occurred.
+The minimum frequency and maximum temperature remain visible after the stress test has finished, making it easy to determine whether thermal throttling occurred.
 
 ---
 
-# Typical Workflow
+## Typical Workflow
 
 Test for 3 minutes:
 
@@ -149,17 +146,17 @@ If the CPU reaches a high temperature **without reducing clock speed**, no therm
 
 ---
 
-# Future Ideas
+## Future Ideas
 
 - Thermal throttling detection
 - Colored warnings
 - CSV export
 - Log file support
-- Support for additional terminal emulators
+- Support for additional terminal emulators (kitty, Alacritty, WezTerm, etc.)
 
 ---
 
-# License
+## License
 
 MIT License
 
